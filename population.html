@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Population Projections · India Data Tiffin Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --saffron: #FF6B2B;
+            --green: #138808;
+            --green-light: #E8F5E4;
+            --navy: #0A1628;
+            --navy-light: #132240;
+            --cream: #FFF8F0;
+            --text: #2D2A26;
+            --text-light: #6B6560;
+            --gold: #D4A843;
+            --purple: #6D28D9;
+            --purple-light: #F3EEFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: var(--navy);
+            border-bottom: 3px solid var(--purple);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .nav-brand svg { width: 36px; height: 36px; }
+
+        .nav-brand span {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--cream);
+        }
+
+        .nav-links { display: flex; gap: 2rem; }
+
+        .nav-links a {
+            color: rgba(255,248,240,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active { color: var(--purple); }
+
+        .page-header {
+            padding: 2.5rem 3rem 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .page-header div { flex: 1; }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--navy);
+        }
+
+        .page-header p {
+            color: var(--text-light);
+            margin-top: 0.35rem;
+            font-weight: 300;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--navy);
+            color: var(--cream);
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'Source Sans 3', sans-serif;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .download-btn:hover { background: var(--navy-light); }
+
+        .download-btn svg { width: 16px; height: 16px; }
+
+        .controls {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0.5rem 3rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+
+        .control-group label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+        }
+
+        .control-group select {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.7rem;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 6px;
+            background: white;
+            color: var(--text);
+            outline: none;
+        }
+
+        .control-group select:focus { border-color: var(--purple); }
+
+        .state-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem 1rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid rgba(0,0,0,0.12);
+            background: white;
+            color: var(--text);
+            transition: all 0.15s;
+        }
+
+        .chip:hover { border-color: var(--purple); }
+        .chip.active { background: var(--purple); color: white; border-color: var(--purple); }
+
+        .chip .chip-x {
+            font-size: 0.8rem;
+            margin-left: 0.15rem;
+            opacity: 0.6;
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem 3rem;
+        }
+
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            text-align: center;
+        }
+
+        .summary-card .sc-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 0.3rem;
+        }
+
+        .summary-card .sc-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.2;
+        }
+
+        .summary-card .sc-sub {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.15rem;
+        }
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .viz-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .viz-card.full-width { grid-column: 1 / -1; }
+
+        .viz-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 0.75rem;
+        }
+
+        .chart-container { position: relative; width: 100%; height: 380px; }
+        .chart-container.tall { height: 550px; }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: white;
+        }
+
+        .table-scroll { max-height: 550px; overflow-y: auto; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+
+        thead th {
+            background: var(--navy);
+            color: var(--cream);
+            font-weight: 600;
+            font-size: 0.65rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            padding: 0.75rem 0.7rem;
+            text-align: right;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        thead th:first-child { text-align: left; }
+        thead th:hover { background: var(--navy-light); }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: background 0.12s;
+        }
+
+        tbody tr:hover { background: var(--purple-light); }
+        tbody tr.india-row { background: #FFF7ED; font-weight: 600; }
+
+        td { padding: 0.6rem 0.7rem; text-align: right; white-space: nowrap; }
+        td:first-child { text-align: left; font-weight: 500; }
+
+        .projected { color: var(--purple); font-style: italic; }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        @media (max-width: 1024px) { .viz-grid { grid-template-columns: 1fr; } }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .page-header, .controls, .state-chips, .content { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .page-header { flex-direction: column; gap: 0.75rem; }
+            .controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <svg viewBox="0 0 36 36" fill="none">
+                <rect x="6" y="8" width="24" height="5" rx="2" fill="#FF6B2B"/>
+                <rect x="7" y="14" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#FF6B2B" stroke-width="1.5"/>
+                <rect x="7" y="22" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#138808" stroke-width="1.5"/>
+                <line x1="18" y1="5" x2="18" y2="8" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="18" cy="4" r="2" fill="#D4A843"/>
+            </svg>
+            <span>India Data Tiffin Box</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="nfhs.html">NFHS</a>
+            <a href="gsdp.html">GSDP</a>
+            <a href="elections.html">Elections</a>
+            <a href="population.html" class="active">Population</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div>
+            <h1>Population Projections</h1>
+            <p>State-wise population projections (2011–2036) · Total, Male & Female · In Millions</p>
+        </div>
+        <div style="text-align:right; flex: 0 0 auto;">
+            <button class="download-btn" onclick="downloadCSV()">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v9M4.5 7.5 8 11l3.5-3.5M3 13h10"/></svg>
+                Download CSV
+            </button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>View</label>
+            <select id="viewMode" onchange="updateView()">
+                <option value="total">Total Population</option>
+                <option value="gender">Male vs Female</option>
+                <option value="growth">Growth Rate (%)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Add State to Chart</label>
+            <select id="addState" onchange="addSelectedState()">
+                <option value="">— Select state —</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Snapshot Year</label>
+            <select id="snapshotYear" onchange="updateView()">
+            </select>
+        </div>
+    </div>
+
+    <div class="state-chips" id="stateChips"></div>
+
+    <div class="content">
+        <div class="summary-strip" id="summaryStrip"></div>
+
+        <div class="viz-grid">
+            <div class="viz-card full-width">
+                <h3 id="chartTitle">Population Trend (2011–2036)</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="viz-grid">
+            <div class="viz-card">
+                <h3 id="barTitle">State Rankings — <span id="barYear">2026</span></h3>
+                <div class="chart-container tall">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="viz-card">
+                <h3>Growth 2011 → 2036 (%)</h3>
+                <div class="chart-container tall">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-family:'Playfair Display',serif; font-size:1rem; color:var(--navy); margin-bottom:0.75rem;">
+            Full Data Table
+            <span style="font-family:'Source Sans 3'; font-size:0.75rem; color:var(--text-light); font-weight:400; margin-left:0.5rem;">
+                Purple italic = projected
+            </span>
+        </h3>
+        <div class="table-wrap">
+            <div class="table-scroll">
+                <table>
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        India Data Tiffin Box · Data source: National Commission on Population, Ministry of Health & Family Welfare, Govt. of India
+    </footer>
+
+    <script>
+    let DATA = null;
+    let selectedStates = ['INDIA', 'UTTAR PRADESH', 'MAHARASHTRA', 'BIHAR', 'TAMIL NADU'];
+    let trendChart = null, barChart = null, growthChart = null;
+
+    const STATE_COLORS = [
+        '#6D28D9', '#E85A1B', '#138808', '#2563EB', '#DC2626',
+        '#D4A843', '#0D9488', '#DB2777', '#7C3AED', '#059669',
+        '#EA580C', '#4F46E5', '#B91C1C', '#0891B2', '#65A30D'
+    ];
+
+    fetch('population_data.json')
+        .then(r => r.json())
+        .then(d => { DATA = d; initUI(); });
+
+    function initUI() {
+        const sel = document.getElementById('addState');
+        DATA.states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = titleCase(s);
+            sel.appendChild(opt);
+        });
+
+        const yrSel = document.getElementById('snapshotYear');
+        DATA.years.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            if (y === 2026) opt.selected = true;
+            yrSel.appendChild(opt);
+        });
+
+        updateView();
+    }
+
+    function titleCase(s) {
+        return s.replace(/\*/g, '').split(' ').map(w =>
+            w.length <= 2 ? w : w.charAt(0) + w.slice(1).toLowerCase()
+        ).join(' ');
+    }
+
+    function fmt(v) {
+        if (v === null || v === undefined) return '—';
+        return v.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function addSelectedState() {
+        const sel = document.getElementById('addState');
+        const st = sel.value;
+        if (st && !selectedStates.includes(st)) {
+            selectedStates.push(st);
+            updateView();
+        }
+        sel.value = '';
+    }
+
+    function removeState(st) {
+        selectedStates = selectedStates.filter(s => s !== st);
+        updateView();
+    }
+
+    function renderChips() {
+        document.getElementById('stateChips').innerHTML = selectedStates.map((s, i) =>
+            `<span class="chip active" onclick="removeState('${s}')" style="background:${STATE_COLORS[i % STATE_COLORS.length]}">
+                ${titleCase(s)} <span class="chip-x">✕</span>
+            </span>`
+        ).join('');
+    }
+
+    function updateView() {
+        renderChips();
+        const mode = document.getElementById('viewMode').value;
+        const snapYear = parseInt(document.getElementById('snapshotYear').value);
+
+        updateSummary(snapYear);
+        updateTrendChart(mode);
+        updateBarChart(snapYear, mode);
+        updateGrowthChart();
+        updateTable(snapYear);
+    }
+
+    function updateSummary(year) {
+        const india = DATA.data['INDIA'];
+        if (!india) return;
+
+        const cur = india[year];
+        const y2011 = india[2011];
+        const y2036 = india[2036];
+        const growth = ((cur.p - y2011.p) / y2011.p * 100);
+        const sexRatio = Math.round(cur.f / cur.m * 1000);
+
+        // Find top state by population
+        let topSt = '', topPop = 0;
+        for (const st of DATA.states) {
+            if (st === 'INDIA') continue;
+            const d = DATA.data[st]?.[year];
+            if (d && d.p > topPop) { topPop = d.p; topSt = st; }
+        }
+
+        document.getElementById('summaryStrip').innerHTML = `
+            <div class="summary-card">
+                <div class="sc-label">India ${year}</div>
+                <div class="sc-value">${fmt(cur.p)}M</div>
+                <div class="sc-sub">${(cur.p / 1000).toFixed(2)}B</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Male / Female</div>
+                <div class="sc-value" style="font-size:1.2rem;">${fmt(cur.m)}M / ${fmt(cur.f)}M</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Sex Ratio (F per 1000 M)</div>
+                <div class="sc-value">${sexRatio}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Growth since 2011</div>
+                <div class="sc-value" style="color:var(--purple)">+${growth.toFixed(1)}%</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Most Populous State</div>
+                <div class="sc-value" style="font-size:1rem;">${titleCase(topSt)}</div>
+                <div class="sc-sub">${fmt(topPop)}M</div>
+            </div>
+        `;
+    }
+
+    function updateTrendChart(mode) {
+        const ctx = document.getElementById('trendChart');
+        if (trendChart) trendChart.destroy();
+
+        const datasets = [];
+
+        if (mode === 'gender' && selectedStates.length === 1) {
+            // Show male & female for single state
+            const st = selectedStates[0];
+            const d = DATA.data[st];
+            datasets.push({
+                label: titleCase(st) + ' — Male',
+                data: DATA.years.map(y => d[y]?.m),
+                borderColor: '#2563EB',
+                backgroundColor: 'rgba(37,99,235,0.08)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+            });
+            datasets.push({
+                label: titleCase(st) + ' — Female',
+                data: DATA.years.map(y => d[y]?.f),
+                borderColor: '#DB2777',
+                backgroundColor: 'rgba(219,39,119,0.08)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+            });
+        } else if (mode === 'growth') {
+            selectedStates.forEach((st, i) => {
+                const d = DATA.data[st];
+                if (!d) return;
+                const base = d[2011]?.p;
+                datasets.push({
+                    label: titleCase(st),
+                    data: DATA.years.map(y => base ? ((d[y]?.p - base) / base * 100) : null),
+                    borderColor: STATE_COLORS[i % STATE_COLORS.length],
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: st === 'INDIA' ? 3 : 2,
+                    borderDash: st === 'INDIA' ? [6, 3] : [],
+                });
+            });
+        } else {
+            selectedStates.forEach((st, i) => {
+                const d = DATA.data[st];
+                if (!d) return;
+
+                if (mode === 'gender') {
+                    datasets.push({
+                        label: titleCase(st) + ' (M)',
+                        data: DATA.years.map(y => d[y]?.m),
+                        borderColor: STATE_COLORS[i % STATE_COLORS.length],
+                        borderDash: [4, 2],
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: 1.5,
+                    });
+                    datasets.push({
+                        label: titleCase(st) + ' (F)',
+                        data: DATA.years.map(y => d[y]?.f),
+                        borderColor: STATE_COLORS[i % STATE_COLORS.length],
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: 1.5,
+                    });
+                } else {
+                    datasets.push({
+                        label: titleCase(st),
+                        data: DATA.years.map(y => d[y]?.p),
+                        borderColor: STATE_COLORS[i % STATE_COLORS.length],
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: st === 'INDIA' ? 3 : 2,
+                        borderDash: st === 'INDIA' ? [6, 3] : [],
+                    });
+                }
+            });
+        }
+
+        const titles = {
+            total: 'Total Population (Millions) · 2011–2036',
+            gender: 'Male & Female Population (Millions) · 2011–2036',
+            growth: 'Cumulative Growth from 2011 (%)'
+        };
+        document.getElementById('chartTitle').textContent = titles[mode];
+
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: DATA.years, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Source Sans 3', size: 11 }, usePointStyle: true, pointStyle: 'line' }
+                    },
+                    annotation: {
+                        annotations: {
+                            todayLine: {
+                                type: 'line',
+                                xMin: '2025',
+                                xMax: '2025',
+                                borderColor: 'rgba(109,40,217,0.4)',
+                                borderWidth: 1,
+                                borderDash: [4, 4],
+                                label: { display: true, content: '← Actual | Projected →', position: 'start', font: { size: 9 }, color: '#6D28D9' }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 11 } } },
+                    y: {
+                        ticks: {
+                            font: { family: 'Source Sans 3', size: 11 },
+                            callback: v => mode === 'growth' ? v + '%' : v
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateBarChart(year, mode) {
+        const ctx = document.getElementById('barChart');
+        if (barChart) barChart.destroy();
+
+        document.getElementById('barYear').textContent = year;
+
+        let stateList = DATA.states.filter(s => s !== 'INDIA');
+        let values = stateList.map(s => ({ state: s, val: DATA.data[s]?.[year]?.p || 0 }));
+        values.sort((a, b) => b.val - a.val);
+        values = values.filter(v => v.val > 0).slice(0, 20);
+
+        barChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: values.map(v => titleCase(v.state).length > 16 ? titleCase(v.state).slice(0,14) + '…' : titleCase(v.state)),
+                datasets: [{
+                    data: values.map(v => v.val),
+                    backgroundColor: values.map(v =>
+                        selectedStates.includes(v.state) ? '#6D28D9' : 'rgba(109,40,217,0.3)'
+                    ),
+                    borderRadius: 2,
+                    barThickness: 16,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: c => fmt(c.parsed.x) + 'M' } }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 11 }, callback: v => v + 'M' }, beginAtZero: true },
+                    y: { ticks: { font: { family: 'Source Sans 3', size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function updateGrowthChart() {
+        const ctx = document.getElementById('growthChart');
+        if (growthChart) growthChart.destroy();
+
+        let stateList = DATA.states.filter(s => s !== 'INDIA');
+        let values = stateList.map(s => {
+            const d = DATA.data[s];
+            const p11 = d?.[2011]?.p;
+            const p36 = d?.[2036]?.p;
+            return { state: s, growth: (p11 && p36) ? ((p36 - p11) / p11 * 100) : 0 };
+        });
+        values.sort((a, b) => b.growth - a.growth);
+        values = values.filter(v => v.growth !== 0);
+
+        growthChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: values.map(v => titleCase(v.state).length > 16 ? titleCase(v.state).slice(0,14) + '…' : titleCase(v.state)),
+                datasets: [{
+                    data: values.map(v => v.growth),
+                    backgroundColor: values.map(v =>
+                        selectedStates.includes(v.state) ? '#6D28D9' : 'rgba(212,168,67,0.6)'
+                    ),
+                    borderRadius: 2,
+                    barThickness: 16,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: c => c.parsed.x.toFixed(1) + '%' } }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 11 }, callback: v => v + '%' }, beginAtZero: true },
+                    y: { ticks: { font: { family: 'Source Sans 3', size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function updateTable(snapYear) {
+        // Show selected years in table: 2011, 2016, 2021, 2026, 2031, 2036 + snapshot
+        let tableYears = [2011, 2016, 2021, 2026, 2031, 2036];
+        if (!tableYears.includes(snapYear)) {
+            tableYears.push(snapYear);
+            tableYears.sort();
+        }
+
+        const thead = document.getElementById('tableHead');
+        thead.innerHTML = `<tr>
+            <th>State / UT</th>
+            ${tableYears.map(y => `<th>${y}${y > 2025 ? ' <span style="color:#a78bfa;">*</span>' : ''}</th>`).join('')}
+            <th>Growth %<br>(2011→2036)</th>
+        </tr>`;
+
+        // Build rows: India first, then sorted by snapYear desc
+        let stateList = DATA.states.filter(s => s !== 'INDIA');
+        stateList.sort((a, b) => (DATA.data[b]?.[snapYear]?.p || 0) - (DATA.data[a]?.[snapYear]?.p || 0));
+
+        const tbody = document.getElementById('tableBody');
+        const allStates = ['INDIA', ...stateList];
+
+        tbody.innerHTML = allStates.map(st => {
+            const d = DATA.data[st];
+            if (!d) return '';
+            const p11 = d[2011]?.p;
+            const p36 = d[2036]?.p;
+            const growth = (p11 && p36) ? ((p36 - p11) / p11 * 100).toFixed(1) : '—';
+            const isIndia = st === 'INDIA';
+
+            return `<tr class="${isIndia ? 'india-row' : ''}">
+                <td>${titleCase(st)}</td>
+                ${tableYears.map(y => {
+                    const v = d[y]?.p;
+                    const projected = y > 2025;
+                    return `<td class="${projected ? 'projected' : ''}">${v !== null && v !== undefined ? fmt(v) : '—'}</td>`;
+                }).join('')}
+                <td style="font-weight:600; color:var(--purple);">${growth !== '—' ? '+' + growth + '%' : '—'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function downloadCSV() {
+        // Generate CSV from original data
+        let csv = 'State/UT,Year,Persons (Millions),Male (Millions),Female (Millions)\n';
+        for (const st of DATA.states) {
+            for (const yr of DATA.years) {
+                const d = DATA.data[st]?.[yr];
+                if (d) {
+                    csv += `"${st}",${yr},${d.p},${d.m},${d.f}\n`;
+                }
+            }
+        }
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'population_projections_india_2011_2036.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    </script>
+</body>
+</html>
