@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFHS Explorer · India Data Tiffin Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --saffron: #FF6B2B;
+            --saffron-deep: #E85A1B;
+            --saffron-light: #FFF0E8;
+            --green: #138808;
+            --green-light: #E8F5E4;
+            --navy: #0A1628;
+            --navy-light: #132240;
+            --cream: #FFF8F0;
+            --warm-gray: #F5EDE4;
+            --text: #2D2A26;
+            --text-light: #6B6560;
+            --gold: #D4A843;
+            --blue: #2563EB;
+            --blue-light: #EFF6FF;
+            --purple: #7C3AED;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: var(--navy);
+            border-bottom: 3px solid var(--saffron);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .nav-brand svg { width: 36px; height: 36px; }
+
+        .nav-brand span {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--cream);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: rgba(255,248,240,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active { color: var(--saffron); }
+
+        .page-header {
+            padding: 2.5rem 3rem 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--navy);
+            letter-spacing: -0.02em;
+        }
+
+        .page-header p {
+            color: var(--text-light);
+            margin-top: 0.35rem;
+            font-weight: 300;
+        }
+
+        .controls {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .control-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+        }
+
+        .control-group select, .control-group input {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.9rem;
+            padding: 0.55rem 0.85rem;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 6px;
+            background: white;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .control-group select:focus, .control-group input:focus {
+            border-color: var(--saffron);
+        }
+
+        .control-group.wide select { min-width: 420px; }
+        .control-group.state-select select { min-width: 220px; }
+
+        .search-wrap {
+            position: relative;
+        }
+
+        .search-wrap input {
+            min-width: 300px;
+            padding-left: 2.2rem;
+        }
+
+        .search-wrap::before {
+            content: '🔍';
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem 3rem;
+        }
+
+        /* Summary strip */
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+        }
+
+        .summary-card .sc-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 0.4rem;
+        }
+
+        .summary-card .sc-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.2;
+        }
+
+        .summary-card .sc-sub {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin-top: 0.2rem;
+        }
+
+        .change-positive { color: var(--green) !important; }
+        .change-negative { color: #DC2626 !important; }
+
+        /* Two-column layout */
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .viz-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 1.75rem;
+        }
+
+        .viz-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .viz-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--navy);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+        }
+
+        .chart-container.tall {
+            height: 600px;
+        }
+
+        /* Data table */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead th {
+            background: var(--navy);
+            color: var(--cream);
+            font-weight: 600;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+        }
+
+        thead th:hover {
+            background: var(--navy-light);
+        }
+
+        thead th .sort-arrow {
+            margin-left: 4px;
+            opacity: 0.5;
+        }
+
+        thead th.sorted .sort-arrow {
+            opacity: 1;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover { background: var(--saffron-light); }
+        tbody tr.india-row { background: #FFF7ED; font-weight: 600; }
+
+        td {
+            padding: 0.7rem 1rem;
+            white-space: nowrap;
+        }
+
+        td.state-name { font-weight: 500; }
+
+        td.change-cell {
+            font-weight: 600;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pill.up { background: var(--green-light); color: var(--green); }
+        .pill.down { background: #FEE2E2; color: #DC2626; }
+        .pill.neutral { background: #F3F4F6; color: #6B7280; }
+
+        .table-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 1024px) {
+            .viz-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .page-header, .controls, .content { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .control-group.wide select, .search-wrap input { min-width: 100%; }
+            .controls { flex-direction: column; }
+            .control-group { width: 100%; }
+            .summary-strip { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <svg viewBox="0 0 36 36" fill="none">
+                <rect x="6" y="8" width="24" height="5" rx="2" fill="#FF6B2B"/>
+                <rect x="7" y="14" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#FF6B2B" stroke-width="1.5"/>
+                <rect x="7" y="22" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#138808" stroke-width="1.5"/>
+                <line x1="18" y1="5" x2="18" y2="8" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="18" cy="4" r="2" fill="#D4A843"/>
+            </svg>
+            <span>India Data Tiffin Box</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="nfhs.html" class="active">NFHS</a>
+            <a href="gsdp.html">GSDP</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <h1>NFHS Data Explorer</h1>
+        <p>National Family Health Survey · NFHS-4 (2015-16) & NFHS-5 (2019-21) · 131 indicators across 37 States & UTs</p>
+    </div>
+
+    <div class="controls" id="controls">
+        <div class="control-group">
+            <label>Search Indicators</label>
+            <div class="search-wrap">
+                <input type="text" id="indicatorSearch" placeholder="Type to filter indicators..." oninput="filterIndicators()">
+            </div>
+        </div>
+        <div class="control-group wide">
+            <label>Indicator</label>
+            <select id="indicatorSelect" onchange="updateView()"></select>
+        </div>
+        <div class="control-group state-select">
+            <label>Highlight State</label>
+            <select id="stateSelect" onchange="updateView()">
+                <option value="">All States</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="loading" class="loading">Loading data…</div>
+        <div id="mainContent" style="display:none;">
+            <div class="summary-strip" id="summaryStrip"></div>
+
+            <div class="viz-grid">
+                <div class="viz-card">
+                    <h3>NFHS-5 by Area (Urban / Rural / Total)</h3>
+                    <div class="chart-container">
+                        <canvas id="areaChart"></canvas>
+                    </div>
+                </div>
+                <div class="viz-card">
+                    <h3>Change: NFHS-4 → NFHS-5 (Total)</h3>
+                    <div class="chart-container">
+                        <canvas id="changeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="viz-card full-width" style="margin-bottom: 2rem;">
+                <h3>All States — Bar Ranking (NFHS-5 Total)</h3>
+                <div class="chart-container tall">
+                    <canvas id="rankChart"></canvas>
+                </div>
+            </div>
+
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); margin-bottom: 1rem;">Full Data Table</h3>
+            <div class="table-wrap">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">State / UT <span class="sort-arrow">↕</span></th>
+                                <th onclick="sortTable(1)">NFHS-5 Urban <span class="sort-arrow">↕</span></th>
+                                <th onclick="sortTable(2)">NFHS-5 Rural <span class="sort-arrow">↕</span></th>
+                                <th onclick="sortTable(3)">NFHS-5 Total <span class="sort-arrow">↕</span></th>
+                                <th onclick="sortTable(4)">NFHS-4 Total <span class="sort-arrow">↕</span></th>
+                                <th onclick="sortTable(5)">Change <span class="sort-arrow">↕</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        India Data Tiffin Box · Data source: National Family Health Survey, Ministry of Health & Family Welfare, Govt. of India
+    </footer>
+
+    <script>
+    let DATA = null;
+    let areaChartInstance = null;
+    let changeChartInstance = null;
+    let rankChartInstance = null;
+    let currentSort = { col: 0, asc: true };
+
+    // Load data
+    fetch('nfhs_data.json')
+        .then(r => r.json())
+        .then(d => {
+            DATA = d;
+            initUI();
+        })
+        .catch(e => {
+            document.getElementById('loading').textContent = 'Failed to load data. Make sure nfhs_data.json is in the same directory.';
+        });
+
+    function initUI() {
+        // Populate indicator dropdown
+        const sel = document.getElementById('indicatorSelect');
+        const indicators = Object.entries(DATA.indicators);
+        indicators.forEach(([key, name]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = `${key}: ${name}`;
+            sel.appendChild(opt);
+        });
+
+        // Populate state dropdown
+        const stateSel = document.getElementById('stateSelect');
+        DATA.states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            stateSel.appendChild(opt);
+        });
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        updateView();
+    }
+
+    function filterIndicators() {
+        const query = document.getElementById('indicatorSearch').value.toLowerCase();
+        const sel = document.getElementById('indicatorSelect');
+        const prev = sel.value;
+        sel.innerHTML = '';
+
+        Object.entries(DATA.indicators).forEach(([key, name]) => {
+            if (name.toLowerCase().includes(query) || key.toLowerCase().includes(query)) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = `${key}: ${name}`;
+                sel.appendChild(opt);
+            }
+        });
+
+        // Try to keep selection
+        if (sel.querySelector(`option[value="${prev}"]`)) {
+            sel.value = prev;
+        }
+        updateView();
+    }
+
+    function parseVal(v) {
+        if (v === 'na' || v === '' || v === null || v === undefined) return null;
+        const n = parseFloat(v);
+        return isNaN(n) ? null : n;
+    }
+
+    function fmt(v) {
+        if (v === null || v === undefined) return '—';
+        return Number.isInteger(v) ? v.toLocaleString('en-IN') : v.toLocaleString('en-IN', { maximumFractionDigits: 1 });
+    }
+
+    function updateView() {
+        const indKey = document.getElementById('indicatorSelect').value;
+        if (!indKey || !DATA.data[indKey]) return;
+
+        const indData = DATA.data[indKey];
+        const indName = DATA.indicators[indKey];
+        const highlightState = document.getElementById('stateSelect').value;
+
+        // Get India row
+        const india = indData['India'] || {};
+        const indiaTotal = parseVal(india.t);
+        const indiaN4 = parseVal(india.n4);
+        const indiaUrban = parseVal(india.u);
+        const indiaRural = parseVal(india.r);
+
+        // Summary strip
+        const changeVal = (indiaTotal !== null && indiaN4 !== null) ? (indiaTotal - indiaN4) : null;
+        document.getElementById('summaryStrip').innerHTML = `
+            <div class="summary-card">
+                <div class="sc-label">India · NFHS-5 Total</div>
+                <div class="sc-value">${fmt(indiaTotal)}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">India · Urban</div>
+                <div class="sc-value">${fmt(indiaUrban)}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">India · Rural</div>
+                <div class="sc-value">${fmt(indiaRural)}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">India · NFHS-4 Total</div>
+                <div class="sc-value">${fmt(indiaN4)}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Change (NFHS4→5)</div>
+                <div class="sc-value ${changeVal > 0 ? 'change-positive' : changeVal < 0 ? 'change-negative' : ''}">
+                    ${changeVal !== null ? (changeVal > 0 ? '+' : '') + fmt(changeVal) : '—'}
+                </div>
+            </div>
+        `;
+
+        // Prepare state data (excluding India)
+        const statesData = DATA.states
+            .filter(s => s !== 'India')
+            .map(s => {
+                const d = indData[s] || {};
+                const t = parseVal(d.t);
+                const n4 = parseVal(d.n4);
+                return {
+                    state: s,
+                    urban: parseVal(d.u),
+                    rural: parseVal(d.r),
+                    total: t,
+                    nfhs4: n4,
+                    change: (t !== null && n4 !== null) ? +(t - n4).toFixed(2) : null
+                };
+            });
+
+        // Area chart — top 15 states by total, or highlighted state
+        updateAreaChart(statesData, highlightState, indiaTotal, indiaUrban, indiaRural);
+        updateChangeChart(statesData, highlightState);
+        updateRankChart(statesData, highlightState, indiaTotal);
+        updateTable(statesData, india);
+    }
+
+    function updateAreaChart(statesData, highlight, indiaTotal, indiaUrban, indiaRural) {
+        const ctx = document.getElementById('areaChart');
+        if (areaChartInstance) areaChartInstance.destroy();
+
+        let filtered = statesData.filter(d => d.total !== null);
+        if (highlight) {
+            // Show highlighted state + India + top/bottom 5
+            filtered.sort((a, b) => (b.total || 0) - (a.total || 0));
+            const top5 = filtered.slice(0, 5);
+            const bot5 = filtered.slice(-5);
+            const hl = filtered.find(d => d.state === highlight);
+            let combined = [...top5, ...bot5];
+            if (hl && !combined.find(d => d.state === hl.state)) combined.push(hl);
+            combined.sort((a, b) => (b.total || 0) - (a.total || 0));
+            filtered = combined;
+        } else {
+            filtered.sort((a, b) => (b.total || 0) - (a.total || 0));
+            filtered = filtered.slice(0, 15);
+        }
+
+        const labels = filtered.map(d => d.state.length > 18 ? d.state.slice(0, 16) + '…' : d.state);
+        const colors = filtered.map(d => d.state === highlight ? '#FF6B2B' : '#0A1628');
+
+        areaChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Urban',
+                        data: filtered.map(d => d.urban),
+                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                        borderRadius: 3,
+                    },
+                    {
+                        label: 'Rural',
+                        data: filtered.map(d => d.rural),
+                        backgroundColor: 'rgba(19, 136, 8, 0.7)',
+                        borderRadius: 3,
+                    },
+                    {
+                        label: 'Total',
+                        data: filtered.map(d => d.total),
+                        backgroundColor: filtered.map(d => d.state === highlight ? 'rgba(255, 107, 43, 0.85)' : 'rgba(10, 22, 40, 0.7)'),
+                        borderRadius: 3,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { family: 'Source Sans 3', size: 11 }, usePointStyle: true, pointStyle: 'rectRounded' } },
+                    annotation: indiaTotal !== null ? {
+                        annotations: {
+                            indiaLine: {
+                                type: 'line',
+                                yMin: indiaTotal,
+                                yMax: indiaTotal,
+                                borderColor: '#D4A843',
+                                borderWidth: 2,
+                                borderDash: [6, 3],
+                                label: { display: true, content: `India: ${fmt(indiaTotal)}`, position: 'start', font: { size: 10 } }
+                            }
+                        }
+                    } : {}
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 10 }, maxRotation: 45 } },
+                    y: { ticks: { font: { family: 'Source Sans 3', size: 11 } }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    function updateChangeChart(statesData, highlight) {
+        const ctx = document.getElementById('changeChart');
+        if (changeChartInstance) changeChartInstance.destroy();
+
+        let filtered = statesData.filter(d => d.change !== null);
+        filtered.sort((a, b) => b.change - a.change);
+
+        // Top 10 + bottom 10 + highlight
+        if (filtered.length > 20) {
+            const top10 = filtered.slice(0, 10);
+            const bot10 = filtered.slice(-10);
+            let combined = [...top10, ...bot10];
+            if (highlight) {
+                const hl = filtered.find(d => d.state === highlight);
+                if (hl && !combined.find(d => d.state === hl.state)) combined.push(hl);
+            }
+            combined.sort((a, b) => b.change - a.change);
+            filtered = combined;
+        }
+
+        const labels = filtered.map(d => d.state.length > 18 ? d.state.slice(0, 16) + '…' : d.state);
+
+        changeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Change (NFHS4 → NFHS5)',
+                    data: filtered.map(d => d.change),
+                    backgroundColor: filtered.map(d => {
+                        if (d.state === highlight) return '#FF6B2B';
+                        return d.change >= 0 ? 'rgba(19, 136, 8, 0.7)' : 'rgba(220, 38, 38, 0.7)';
+                    }),
+                    borderRadius: 3,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 11 } } },
+                    y: { ticks: { font: { family: 'Source Sans 3', size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function updateRankChart(statesData, highlight, indiaTotal) {
+        const ctx = document.getElementById('rankChart');
+        if (rankChartInstance) rankChartInstance.destroy();
+
+        let filtered = statesData.filter(d => d.total !== null);
+        filtered.sort((a, b) => (b.total || 0) - (a.total || 0));
+
+        const labels = filtered.map(d => d.state);
+
+        rankChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'NFHS-5 Total',
+                    data: filtered.map(d => d.total),
+                    backgroundColor: filtered.map(d => {
+                        if (d.state === highlight) return '#FF6B2B';
+                        return 'rgba(10, 22, 40, 0.65)';
+                    }),
+                    borderRadius: 2,
+                    barThickness: 14,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                },
+                scales: {
+                    x: {
+                        ticks: { font: { family: 'Source Sans 3', size: 11 } },
+                        beginAtZero: true
+                    },
+                    y: {
+                        ticks: { font: { family: 'Source Sans 3', size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTable(statesData, indiaRow) {
+        const tbody = document.getElementById('dataTableBody');
+        // Build rows: India first, then states sorted by total desc
+        let rows = [];
+
+        // India row
+        const iT = parseVal(indiaRow.t);
+        const iN4 = parseVal(indiaRow.n4);
+        const iChange = (iT !== null && iN4 !== null) ? +(iT - iN4).toFixed(2) : null;
+        rows.push({
+            state: 'India',
+            urban: parseVal(indiaRow.u),
+            rural: parseVal(indiaRow.r),
+            total: iT,
+            nfhs4: iN4,
+            change: iChange,
+            isIndia: true
+        });
+
+        // Sort states
+        const sorted = [...statesData].sort((a, b) => (b.total || -Infinity) - (a.total || -Infinity));
+        rows = rows.concat(sorted.map(d => ({ ...d, isIndia: false })));
+
+        tbody.innerHTML = rows.map(r => {
+            const changePill = r.change !== null
+                ? `<span class="pill ${r.change > 0 ? 'up' : r.change < 0 ? 'down' : 'neutral'}">${r.change > 0 ? '▲' : r.change < 0 ? '▼' : '—'} ${fmt(Math.abs(r.change))}</span>`
+                : '—';
+            return `<tr class="${r.isIndia ? 'india-row' : ''}">
+                <td class="state-name">${r.state}</td>
+                <td>${fmt(r.urban)}</td>
+                <td>${fmt(r.rural)}</td>
+                <td>${fmt(r.total)}</td>
+                <td>${fmt(r.nfhs4)}</td>
+                <td class="change-cell">${changePill}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function sortTable(colIndex) {
+        // Simple table sort
+        if (currentSort.col === colIndex) {
+            currentSort.asc = !currentSort.asc;
+        } else {
+            currentSort.col = colIndex;
+            currentSort.asc = colIndex === 0 ? true : false; // numbers desc by default
+        }
+
+        const tbody = document.getElementById('dataTableBody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        rows.sort((a, b) => {
+            const aIndia = a.classList.contains('india-row');
+            const bIndia = b.classList.contains('india-row');
+            if (aIndia) return -1;
+            if (bIndia) return 1;
+
+            let aVal, bVal;
+            if (colIndex === 0) {
+                aVal = a.cells[0].textContent;
+                bVal = b.cells[0].textContent;
+                return currentSort.asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            } else {
+                aVal = parseFloat(a.cells[colIndex].textContent.replace(/[^0-9.\-]/g, '')) || -Infinity;
+                bVal = parseFloat(b.cells[colIndex].textContent.replace(/[^0-9.\-]/g, '')) || -Infinity;
+                return currentSort.asc ? aVal - bVal : bVal - aVal;
+            }
+        });
+
+        rows.forEach(r => tbody.appendChild(r));
+
+        // Update sort arrows
+        document.querySelectorAll('thead th').forEach((th, i) => {
+            th.classList.toggle('sorted', i === colIndex);
+            const arrow = th.querySelector('.sort-arrow');
+            if (arrow) arrow.textContent = i === colIndex ? (currentSort.asc ? '↑' : '↓') : '↕';
+        });
+    }
+    </script>
+</body>
+</html>

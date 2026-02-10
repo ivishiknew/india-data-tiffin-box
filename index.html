@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Data Tiffin Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF6B2B;
+            --saffron-deep: #E85A1B;
+            --green: #138808;
+            --green-light: #1AA50A;
+            --navy: #0A1628;
+            --navy-light: #132240;
+            --cream: #FFF8F0;
+            --warm-gray: #F5EDE4;
+            --text: #2D2A26;
+            --text-light: #6B6560;
+            --gold: #D4A843;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .page-grain {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: var(--navy);
+            border-bottom: 3px solid var(--saffron);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .nav-brand .tiffin-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .nav-brand span {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--cream);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: rgba(255,248,240,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--saffron);
+        }
+
+        .hero {
+            padding: 6rem 3rem 4rem;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            background: var(--saffron);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 0.35rem 1rem;
+            border-radius: 2px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 3.5rem;
+            line-height: 1.1;
+            color: var(--navy);
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+        }
+
+        .hero h1 .accent {
+            color: var(--saffron);
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-light);
+            line-height: 1.7;
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .datasets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 3rem 5rem;
+        }
+
+        .dataset-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .dataset-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(10,22,40,0.1);
+        }
+
+        .card-banner {
+            height: 8px;
+        }
+
+        .card-banner.saffron { background: linear-gradient(90deg, var(--saffron), var(--gold)); }
+        .card-banner.green { background: linear-gradient(90deg, var(--green), var(--green-light)); }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .card-body .card-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+        }
+
+        .card-body h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--navy);
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .card-body p {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            line-height: 1.65;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card-meta .meta-item {
+            font-size: 0.8rem;
+        }
+
+        .card-meta .meta-item strong {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        .card-meta .meta-item span {
+            color: var(--text-light);
+        }
+
+        .card-arrow {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--saffron);
+            margin-top: 1.5rem;
+        }
+
+        .green .card-arrow { color: var(--green); }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .hero { padding: 3rem 1.5rem 2rem; }
+            .hero h1 { font-size: 2.2rem; }
+            .datasets-grid { grid-template-columns: 1fr; padding: 0 1.5rem 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-grain"></div>
+
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <svg class="tiffin-icon" viewBox="0 0 36 36" fill="none">
+                <rect x="6" y="8" width="24" height="5" rx="2" fill="#FF6B2B"/>
+                <rect x="7" y="14" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#FF6B2B" stroke-width="1.5"/>
+                <rect x="7" y="22" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#138808" stroke-width="1.5"/>
+                <line x1="18" y1="5" x2="18" y2="8" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="18" cy="4" r="2" fill="#D4A843"/>
+            </svg>
+            <span>India Data Tiffin Box</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="active">Home</a>
+            <a href="nfhs.html">NFHS</a>
+            <a href="gsdp.html">GSDP</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-tag">Open Data Explorer</div>
+        <h1>An assortment of <span class="accent" style="color:#2563EB;">India data</span></h1>
+    </section>
+
+    <section class="datasets-grid">
+        <a href="nfhs.html" class="dataset-card">
+            <div class="card-banner saffron"></div>
+            <div class="card-body">
+                <div class="card-label">Health & Demographics</div>
+                <h3>NFHS-4 & NFHS-5</h3>
+                <p>National Family Health Survey data across 131 indicators for all states & UTs. Compare NFHS-4 (2015-16) and NFHS-5 (2019-21) with urban, rural, and total breakdowns.</p>
+                <div class="card-meta">
+                    <div class="meta-item">
+                        <strong>131</strong>
+                        <span>Indicators</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>37</strong>
+                        <span>States & UTs</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>2</strong>
+                        <span>Survey Rounds</span>
+                    </div>
+                </div>
+                <div class="card-arrow">
+                    Explore data →
+                </div>
+            </div>
+        </a>
+
+        <a href="gsdp.html" class="dataset-card green">
+            <div class="card-banner green"></div>
+            <div class="card-body">
+                <div class="card-label">Economy</div>
+                <h3>State GSDP Per Capita</h3>
+                <p>Gross State Domestic Product per person for all states & UTs. Compare economic output across 2014-15 and 2023-24 in both Rupees and US Dollars.</p>
+                <div class="card-meta">
+                    <div class="meta-item">
+                        <strong>34</strong>
+                        <span>States & UTs</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>2</strong>
+                        <span>Time Periods</span>
+                    </div>
+                </div>
+                <div class="card-arrow">
+                    Explore data →
+                </div>
+            </div>
+        </a>
+    </section>
+
+    <footer>
+        India Data Tiffin Box · Built for quick data lookups · Data from NFHS & MoSPI
+    </footer>
+</body>
+</html>

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSDP Per Capita · India Data Tiffin Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --saffron: #FF6B2B;
+            --green: #138808;
+            --green-light: #E8F5E4;
+            --navy: #0A1628;
+            --navy-light: #132240;
+            --cream: #FFF8F0;
+            --text: #2D2A26;
+            --text-light: #6B6560;
+            --gold: #D4A843;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: var(--navy);
+            border-bottom: 3px solid var(--green);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .nav-brand svg { width: 36px; height: 36px; }
+
+        .nav-brand span {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--cream);
+        }
+
+        .nav-links { display: flex; gap: 2rem; }
+
+        .nav-links a {
+            color: rgba(255,248,240,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active { color: var(--green); }
+
+        .page-header {
+            padding: 2.5rem 3rem 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--navy);
+        }
+
+        .page-header p {
+            color: var(--text-light);
+            margin-top: 0.35rem;
+            font-weight: 300;
+        }
+
+        .controls {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+        .control-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+        }
+
+        .control-group select {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.9rem;
+            padding: 0.55rem 0.85rem;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 6px;
+            background: white;
+            color: var(--text);
+            outline: none;
+        }
+
+        .control-group select:focus { border-color: var(--green); }
+
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem 3rem;
+        }
+
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+        }
+
+        .summary-card .sc-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 0.4rem;
+        }
+
+        .summary-card .sc-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.2;
+        }
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .viz-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 1.75rem;
+        }
+
+        .viz-card.full-width { grid-column: 1 / -1; }
+
+        .viz-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--navy);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+        }
+
+        .chart-container.tall { height: 700px; }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: white;
+        }
+
+        .table-scroll { max-height: 600px; overflow-y: auto; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+
+        thead th {
+            background: var(--navy);
+            color: var(--cream);
+            font-weight: 600;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.85rem 1rem;
+            text-align: right;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+        }
+
+        thead th:first-child { text-align: left; }
+        thead th:hover { background: var(--navy-light); }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover { background: var(--green-light); }
+        tbody tr.india-row { background: #FFF7ED; font-weight: 600; }
+
+        td { padding: 0.7rem 1rem; text-align: right; white-space: nowrap; }
+        td:first-child { text-align: left; font-weight: 500; }
+
+        .growth-bar {
+            display: inline-block;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--green);
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        @media (max-width: 1024px) { .viz-grid { grid-template-columns: 1fr; } }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .page-header, .controls, .content { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <svg viewBox="0 0 36 36" fill="none">
+                <rect x="6" y="8" width="24" height="5" rx="2" fill="#FF6B2B"/>
+                <rect x="7" y="14" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#FF6B2B" stroke-width="1.5"/>
+                <rect x="7" y="22" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#138808" stroke-width="1.5"/>
+                <line x1="18" y1="5" x2="18" y2="8" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="18" cy="4" r="2" fill="#D4A843"/>
+            </svg>
+            <span>India Data Tiffin Box</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="nfhs.html">NFHS</a>
+            <a href="gsdp.html" class="active">GSDP</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <h1>State GSDP Per Capita</h1>
+        <p>Gross State Domestic Product per person · 2014-15 & 2023-24 · All States & Union Territories</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Currency</label>
+            <select id="currencySelect" onchange="updateView()">
+                <option value="rs">₹ Indian Rupees</option>
+                <option value="usd">US Dollars ($)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Highlight State</label>
+            <select id="stateSelect" onchange="updateView()">
+                <option value="">All States</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="summary-strip" id="summaryStrip"></div>
+
+        <div class="viz-card full-width" style="margin-bottom: 2rem;">
+            <h3 id="rankTitle">State GSDP Per Capita Ranking</h3>
+            <div class="chart-container tall">
+                <canvas id="rankChart"></canvas>
+            </div>
+        </div>
+
+        <div class="viz-grid">
+            <div class="viz-card">
+                <h3 id="compareTitle">2014-15 vs 2023-24 Comparison</h3>
+                <div class="chart-container" style="height: 450px;">
+                    <canvas id="compareChart"></canvas>
+                </div>
+            </div>
+            <div class="viz-card">
+                <h3>Growth (2014-15 → 2023-24)</h3>
+                <div class="chart-container" style="height: 450px;">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); margin-bottom: 1rem;">Full Data Table</h3>
+        <div class="table-wrap">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">State / UT ↕</th>
+                            <th onclick="sortTable(1)">Population (2024) ↕</th>
+                            <th onclick="sortTable(2)">GSDP PC 2014-15 ↕</th>
+                            <th onclick="sortTable(3)">GSDP PC 2023-24 ↕</th>
+                            <th onclick="sortTable(4)">Growth % ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        India Data Tiffin Box · Data source: Ministry of Statistics and Programme Implementation, Govt. of India
+    </footer>
+
+    <script>
+    let DATA = [];
+    let rankChartInstance = null;
+    let compareChartInstance = null;
+    let growthChartInstance = null;
+
+    fetch('gsdp_data.json')
+        .then(r => r.json())
+        .then(d => {
+            DATA = d;
+            initUI();
+        });
+
+    function initUI() {
+        const sel = document.getElementById('stateSelect');
+        DATA.forEach(d => {
+            if (d.state !== 'India') {
+                const opt = document.createElement('option');
+                opt.value = d.state;
+                opt.textContent = d.state;
+                sel.appendChild(opt);
+            }
+        });
+        updateView();
+    }
+
+    function fmt(v, currency) {
+        if (v === null || v === undefined) return '—';
+        if (currency === 'usd') return '$' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        return '₹' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+
+    function fmtPop(v) {
+        if (!v) return '—';
+        if (v >= 10000000) return (v / 10000000).toFixed(1) + ' Cr';
+        if (v >= 100000) return (v / 100000).toFixed(1) + ' L';
+        return v.toLocaleString('en-IN');
+    }
+
+    function updateView() {
+        const currency = document.getElementById('currencySelect').value;
+        const highlight = document.getElementById('stateSelect').value;
+
+        const india = DATA.find(d => d.state === 'India');
+        const states = DATA.filter(d => d.state !== 'India');
+
+        // Determine which fields based on currency
+        const getPC_new = (d) => currency === 'usd' ? d.gdp_pc_2023_24_usd : d.gdp_pc_2023_24_rs;
+        const getPC_old = (d) => currency === 'usd' ? d.gdp_pc_2014_15_usd : d.gdp_pc_2014_15_rs;
+        const symbol = currency === 'usd' ? '$' : '₹';
+
+        // India summary
+        const indiaNew = getPC_new(india);
+        const indiaOld = getPC_old(india);
+
+        // Top and bottom state
+        const ranked = states.filter(d => getPC_new(d) !== null).sort((a, b) => getPC_new(b) - getPC_new(a));
+        const top = ranked[0];
+        const bottom = ranked[ranked.length - 1];
+
+        document.getElementById('summaryStrip').innerHTML = `
+            <div class="summary-card">
+                <div class="sc-label">India GDP PC (2023-24)</div>
+                <div class="sc-value">${fmt(indiaNew, currency)}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Highest</div>
+                <div class="sc-value" style="font-size:1.3rem;">${top ? top.state : '—'}</div>
+                <div style="font-size:0.85rem; color:var(--green); font-weight:600;">${top ? fmt(getPC_new(top), currency) : ''}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Lowest</div>
+                <div class="sc-value" style="font-size:1.3rem;">${bottom ? bottom.state : '—'}</div>
+                <div style="font-size:0.85rem; color:#DC2626; font-weight:600;">${bottom ? fmt(getPC_new(bottom), currency) : ''}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Ratio (Top / Bottom)</div>
+                <div class="sc-value">${top && bottom ? (getPC_new(top) / getPC_new(bottom)).toFixed(1) + 'x' : '—'}</div>
+            </div>
+        `;
+
+        // Rank chart
+        updateRankChart(ranked, highlight, currency, indiaNew);
+        updateCompareChart(states, highlight, currency);
+        updateGrowthChart(states, highlight, currency);
+        updateTable(states, india, currency);
+    }
+
+    function updateRankChart(ranked, highlight, currency, indiaVal) {
+        const ctx = document.getElementById('rankChart');
+        if (rankChartInstance) rankChartInstance.destroy();
+
+        const getPC = (d) => currency === 'usd' ? d.gdp_pc_2023_24_usd : d.gdp_pc_2023_24_rs;
+        const labels = ranked.map(d => d.state);
+        const values = ranked.map(d => getPC(d));
+
+        document.getElementById('rankTitle').textContent = `State GSDP Per Capita 2023-24 (${currency === 'usd' ? 'USD' : '₹'})`;
+
+        rankChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ranked.map(d => d.state === highlight ? '#FF6B2B' : 'rgba(19, 136, 8, 0.65)'),
+                    borderRadius: 2,
+                    barThickness: 18,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const v = ctx.parsed.x;
+                                return currency === 'usd'
+                                    ? '$' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+                                    : '₹' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            font: { family: 'Source Sans 3', size: 11 },
+                            callback: (v) => currency === 'usd' ? '$' + (v/1000).toFixed(0) + 'k' : '₹' + (v/1000).toFixed(0) + 'k'
+                        },
+                        beginAtZero: true
+                    },
+                    y: { ticks: { font: { family: 'Source Sans 3', size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function updateCompareChart(states, highlight, currency) {
+        const ctx = document.getElementById('compareChart');
+        if (compareChartInstance) compareChartInstance.destroy();
+
+        const getNew = (d) => currency === 'usd' ? d.gdp_pc_2023_24_usd : d.gdp_pc_2023_24_rs;
+        const getOld = (d) => currency === 'usd' ? d.gdp_pc_2014_15_usd : d.gdp_pc_2014_15_rs;
+
+        let filtered = states.filter(d => getNew(d) !== null && getOld(d) !== null);
+        filtered.sort((a, b) => getNew(b) - getNew(a));
+
+        // Top 15 + highlight
+        let show = filtered.slice(0, 15);
+        if (highlight) {
+            const hl = filtered.find(d => d.state === highlight);
+            if (hl && !show.find(d => d.state === hl.state)) show.push(hl);
+            show.sort((a, b) => getNew(b) - getNew(a));
+        }
+
+        document.getElementById('compareTitle').textContent = `2014-15 vs 2023-24 (${currency === 'usd' ? 'USD' : '₹'})`;
+
+        compareChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: show.map(d => d.state.length > 14 ? d.state.slice(0, 12) + '…' : d.state),
+                datasets: [
+                    {
+                        label: '2014-15',
+                        data: show.map(d => getOld(d)),
+                        backgroundColor: 'rgba(10, 22, 40, 0.4)',
+                        borderRadius: 3,
+                    },
+                    {
+                        label: '2023-24',
+                        data: show.map(d => getNew(d)),
+                        backgroundColor: show.map(d => d.state === highlight ? '#FF6B2B' : 'rgba(19, 136, 8, 0.7)'),
+                        borderRadius: 3,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { family: 'Source Sans 3', size: 11 }, usePointStyle: true } },
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 9 }, maxRotation: 55 } },
+                    y: {
+                        ticks: {
+                            font: { family: 'Source Sans 3', size: 11 },
+                            callback: (v) => currency === 'usd' ? '$' + (v/1000).toFixed(0) + 'k' : '₹' + (v/1000).toFixed(0) + 'k'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function updateGrowthChart(states, highlight, currency) {
+        const ctx = document.getElementById('growthChart');
+        if (growthChartInstance) growthChartInstance.destroy();
+
+        const getNew = (d) => currency === 'usd' ? d.gdp_pc_2023_24_usd : d.gdp_pc_2023_24_rs;
+        const getOld = (d) => currency === 'usd' ? d.gdp_pc_2014_15_usd : d.gdp_pc_2014_15_rs;
+
+        let filtered = states.filter(d => getNew(d) !== null && getOld(d) !== null && getOld(d) > 0);
+        filtered = filtered.map(d => ({
+            ...d,
+            growth: ((getNew(d) - getOld(d)) / getOld(d) * 100)
+        }));
+        filtered.sort((a, b) => b.growth - a.growth);
+
+        growthChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: filtered.map(d => d.state.length > 14 ? d.state.slice(0, 12) + '…' : d.state),
+                datasets: [{
+                    label: 'Growth %',
+                    data: filtered.map(d => d.growth),
+                    backgroundColor: filtered.map(d => d.state === highlight ? '#FF6B2B' : 'rgba(212, 168, 67, 0.7)'),
+                    borderRadius: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ctx.parsed.y.toFixed(1) + '% growth'
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 9 }, maxRotation: 55 } },
+                    y: {
+                        ticks: { font: { family: 'Source Sans 3', size: 11 }, callback: (v) => v + '%' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTable(states, india, currency) {
+        const tbody = document.getElementById('dataTableBody');
+        const getNew = (d) => currency === 'usd' ? d.gdp_pc_2023_24_usd : d.gdp_pc_2023_24_rs;
+        const getOld = (d) => currency === 'usd' ? d.gdp_pc_2014_15_usd : d.gdp_pc_2014_15_rs;
+
+        let rows = [];
+
+        // India row
+        const iNew = getNew(india);
+        const iOld = getOld(india);
+        const iGrowth = (iNew && iOld && iOld > 0) ? ((iNew - iOld) / iOld * 100) : null;
+        rows.push({ state: 'India', population: null, old: iOld, new_val: iNew, growth: iGrowth, isIndia: true });
+
+        // States
+        const sorted = [...states].filter(d => getNew(d) !== null).sort((a, b) => getNew(b) - getNew(a));
+        sorted.forEach(d => {
+            const nv = getNew(d);
+            const ov = getOld(d);
+            const g = (nv && ov && ov > 0) ? ((nv - ov) / ov * 100) : null;
+            rows.push({ state: d.state, population: d.population, old: ov, new_val: nv, growth: g, isIndia: false });
+        });
+
+        tbody.innerHTML = rows.map(r => {
+            const growthStr = r.growth !== null
+                ? `<span style="color: ${r.growth >= 0 ? 'var(--green)' : '#DC2626'}; font-weight:600;">${r.growth >= 0 ? '+' : ''}${r.growth.toFixed(1)}%</span>`
+                : '—';
+            return `<tr class="${r.isIndia ? 'india-row' : ''}">
+                <td>${r.state}</td>
+                <td>${fmtPop(r.population)}</td>
+                <td>${r.old ? fmt(r.old, currency) : '—'}</td>
+                <td>${r.new_val ? fmt(r.new_val, currency) : '—'}</td>
+                <td>${growthStr}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function sortTable(colIndex) {
+        const tbody = document.getElementById('dataTableBody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const isAsc = tbody.dataset.sortCol == colIndex && tbody.dataset.sortDir !== 'asc';
+
+        rows.sort((a, b) => {
+            if (a.classList.contains('india-row')) return -1;
+            if (b.classList.contains('india-row')) return 1;
+
+            if (colIndex === 0) {
+                const av = a.cells[0].textContent, bv = b.cells[0].textContent;
+                return isAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+            } else {
+                const av = parseFloat(a.cells[colIndex].textContent.replace(/[^0-9.\-]/g, '')) || -Infinity;
+                const bv = parseFloat(b.cells[colIndex].textContent.replace(/[^0-9.\-]/g, '')) || -Infinity;
+                return isAsc ? av - bv : bv - av;
+            }
+        });
+
+        tbody.dataset.sortCol = colIndex;
+        tbody.dataset.sortDir = isAsc ? 'asc' : 'desc';
+        rows.forEach(r => tbody.appendChild(r));
+    }
+    </script>
+</body>
+</html>
