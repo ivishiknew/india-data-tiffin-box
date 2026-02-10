@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elections · India Data Tiffin Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --saffron: #FF6B2B;
+            --green: #138808;
+            --green-light: #E8F5E4;
+            --navy: #0A1628;
+            --navy-light: #132240;
+            --cream: #FFF8F0;
+            --text: #2D2A26;
+            --text-light: #6B6560;
+            --gold: #D4A843;
+            --bjp: #FF8C00;
+            --inc: #00BFFF;
+            --nda: #FF8C00;
+            --india-a: #00BFFF;
+            --others: #888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: var(--navy);
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .nav-brand svg { width: 36px; height: 36px; }
+
+        .nav-brand span {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--cream);
+        }
+
+        .nav-links { display: flex; gap: 2rem; }
+
+        .nav-links a {
+            color: rgba(255,248,240,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+
+        .page-header {
+            padding: 2.5rem 3rem 1rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--navy);
+        }
+
+        .page-header p {
+            color: var(--text-light);
+            margin-top: 0.35rem;
+            font-weight: 300;
+        }
+
+        .controls {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0.75rem 3rem 1rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+
+        .control-group label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+        }
+
+        .control-group select, .control-group input {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.7rem;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 6px;
+            background: white;
+            color: var(--text);
+            outline: none;
+        }
+
+        .control-group select:focus, .control-group input:focus { border-color: var(--gold); }
+
+        /* Summary strip */
+        .summary-strip {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 3rem 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            text-align: center;
+        }
+
+        .summary-card .sc-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-card .sc-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .sc-nda { color: var(--bjp); }
+        .sc-india { color: #0077CC; }
+        .sc-others { color: var(--others); }
+
+        /* Main layout */
+        .content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 3rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .map-panel {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            overflow: hidden;
+            position: sticky;
+            top: 1rem;
+            height: calc(100vh - 6rem);
+        }
+
+        .map-panel h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--navy);
+            padding: 1rem 1.25rem 0.5rem;
+        }
+
+        #map {
+            height: calc(100% - 3rem);
+            width: 100%;
+        }
+
+        .table-panel {
+            min-width: 0;
+        }
+
+        .table-panel h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 0.75rem;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: white;
+        }
+
+        .table-scroll {
+            max-height: calc(100vh - 10rem);
+            overflow-y: auto;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+
+        thead th {
+            background: var(--navy);
+            color: var(--cream);
+            font-weight: 600;
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.7rem 0.6rem;
+            text-align: left;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        thead th:hover { background: var(--navy-light); }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: background 0.12s;
+            cursor: pointer;
+        }
+
+        tbody tr:hover { background: #FFF7ED; }
+        tbody tr.highlighted { background: #FEF3C7; }
+
+        td {
+            padding: 0.55rem 0.6rem;
+            white-space: nowrap;
+        }
+
+        .party-pill {
+            display: inline-block;
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .party-BJP, .party-NDA { background: var(--bjp); }
+        .party-INC, .party-INDIA { background: #0077CC; }
+        .party-AITC { background: #20B050; }
+        .party-DMK { background: #E3222C; }
+        .party-SP { background: #E60000; }
+        .party-BJD { background: #3CB44B; }
+        .party-YSRCP, .party-YSR { background: #0D47A1; }
+        .party-TDP { background: #FFD700; color: #333; }
+        .party-CPM { background: #CC0000; }
+        .party-AAP { background: #0072B9; }
+        .party-SHS { background: #F36F21; }
+        .party-JDU, .party-JD\(U\) { background: #006400; }
+        .party-BSP { background: #22409A; }
+        .party-RJD { background: #006B3F; }
+        .party-JKN { background: #FF0000; }
+        .party-default { background: #777; }
+
+        .swing-up { color: var(--bjp); font-weight: 600; }
+        .swing-down { color: #0077CC; font-weight: 600; }
+
+        /* Map tooltip */
+        .leaflet-tooltip {
+            font-family: 'Source Sans 3', sans-serif !important;
+            font-size: 0.8rem !important;
+            padding: 6px 10px !important;
+            border-radius: 4px !important;
+        }
+
+        .map-legend {
+            padding: 0.5rem 1.25rem 0.75rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+        }
+
+        .map-legend .leg-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .map-legend .leg-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .search-wrap { position: relative; }
+        .search-wrap input { min-width: 200px; padding-left: 2rem; }
+        .search-wrap::before {
+            content: '🔍';
+            position: absolute;
+            left: 0.6rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            opacity: 0.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        @media (max-width: 1024px) {
+            .content { grid-template-columns: 1fr; }
+            .map-panel { position: relative; height: 500px; top: auto; }
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .page-header, .controls, .summary-strip { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .content { padding: 0 1.5rem 2rem; }
+            .controls { flex-direction: column; }
+            .search-wrap input { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <svg viewBox="0 0 36 36" fill="none">
+                <rect x="6" y="8" width="24" height="5" rx="2" fill="#FF6B2B"/>
+                <rect x="7" y="14" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#FF6B2B" stroke-width="1.5"/>
+                <rect x="7" y="22" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#138808" stroke-width="1.5"/>
+                <line x1="18" y1="5" x2="18" y2="8" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="18" cy="4" r="2" fill="#D4A843"/>
+            </svg>
+            <span>India Data Tiffin Box</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="nfhs.html">NFHS</a>
+            <a href="gsdp.html">GSDP</a>
+            <a href="elections.html" class="active">Elections</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <h1>Lok Sabha Elections Explorer</h1>
+        <p>Parliamentary constituency results · 2024, 2019, 2014 & 2009 · 543 seats with demographics</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Search Constituency</label>
+            <div class="search-wrap">
+                <input type="text" id="searchInput" placeholder="Type name or state…" oninput="filterData()">
+            </div>
+        </div>
+        <div class="control-group">
+            <label>State</label>
+            <select id="stateFilter" onchange="filterData()">
+                <option value="">All States</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>2024 Alliance</label>
+            <select id="allianceFilter" onchange="filterData()">
+                <option value="">All</option>
+                <option value="NDA">NDA</option>
+                <option value="INDIA">INDIA</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Map Color</label>
+            <select id="mapColor" onchange="updateMapColors()">
+                <option value="alliance24">2024 Alliance</option>
+                <option value="party24">2024 Winning Party</option>
+                <option value="party19">2019 Winner</option>
+                <option value="bjp_swing">BJP Vote Swing</option>
+                <option value="margin24">2024 Win Margin</option>
+                <option value="turnout">2019 Turnout</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Region</label>
+            <select id="regionFilter" onchange="filterData()">
+                <option value="">All Regions</option>
+                <option value="North">North</option>
+                <option value="South">South</option>
+                <option value="East">East</option>
+                <option value="West">West</option>
+                <option value="HB">Hindi Belt</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="summary-strip" id="summaryStrip"></div>
+
+    <div class="content">
+        <div class="map-panel">
+            <h3 id="mapTitle">Constituency Map — 2024 Alliance</h3>
+            <div class="map-legend" id="mapLegend"></div>
+            <div id="map"></div>
+        </div>
+        <div class="table-panel">
+            <h3><span id="tableCount">543</span> Constituencies</h3>
+            <div class="table-wrap">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Constituency ↕</th>
+                                <th onclick="sortTable(1)">State ↕</th>
+                                <th onclick="sortTable(2)">2024 Winner ↕</th>
+                                <th onclick="sortTable(3)">Alliance ↕</th>
+                                <th onclick="sortTable(4)">Vote % ↕</th>
+                                <th onclick="sortTable(5)">Margin ↕</th>
+                                <th onclick="sortTable(6)">2019 ↕</th>
+                                <th onclick="sortTable(7)">BJP Swing ↕</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        India Data Tiffin Box · Data source: Election Commission of India, HowIndiaLives
+    </footer>
+
+    <script>
+    let ELEC = [];
+    let GEO = null;
+    let map = null;
+    let geoLayer = null;
+    let filteredData = [];
+    let sortState = { col: 0, asc: true };
+
+    const ALLIANCE_COLORS = {
+        'NDA': '#FF8C00',
+        'INDIA': '#0077CC',
+        'Others': '#888'
+    };
+
+    const PARTY_COLORS = {
+        'BJP': '#FF8C00', 'INC': '#0077CC', 'AITC': '#20B050', 'DMK': '#E3222C',
+        'SP': '#E60000', 'BJD': '#3CB44B', 'YSRCP': '#0D47A1', 'TDP': '#F0C808',
+        'CPM': '#CC0000', 'Communist Party of India  (Marxist)': '#CC0000',
+        'AAP': '#0072B9', 'SHS': '#F36F21', 'Shiv Sena (Uddhav Balasaheb Thackrey)': '#F36F21',
+        'JD(U)': '#006400', 'BSP': '#22409A', 'RJD': '#006B3F',
+        'JKN': '#FF0000', 'Jammu & Kashmir National Conference': '#FF0000',
+        'JKPDP': '#3CB371', 'AGP': '#FF4500', 'RLD': '#006400',
+        'CPI(ML)(L)': '#CC0000', 'NCP': '#004B87', 'SAD': '#FFD700',
+        'TRS': '#FF1493', 'BRS': '#FF1493',
+    };
+
+    function getPartyColor(party) {
+        return PARTY_COLORS[party] || '#777';
+    }
+
+    function getPartyClass(party) {
+        const known = ['BJP','INC','AITC','DMK','SP','BJD','YSRCP','TDP','CPM','AAP','SHS','BSP','RJD','JKN','NDA','INDIA'];
+        for (const k of known) {
+            if (party && party.includes(k)) return 'party-' + k;
+        }
+        return 'party-default';
+    }
+
+    // Load data
+    Promise.all([
+        fetch('election_data.json').then(r => r.json()),
+        fetch('india_pc.geojson').then(r => r.json())
+    ]).then(([elec, geo]) => {
+        ELEC = elec;
+        GEO = geo;
+        initUI();
+    });
+
+    function initUI() {
+        // Populate state filter
+        const states = [...new Set(ELEC.map(e => e.st))].sort();
+        const sel = document.getElementById('stateFilter');
+        states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            sel.appendChild(opt);
+        });
+
+        // Init map
+        map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([22.5, 82], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+            attribution: '©OpenStreetMap ©CARTO',
+            maxZoom: 12
+        }).addTo(map);
+
+        filterData();
+    }
+
+    function filterData() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const state = document.getElementById('stateFilter').value;
+        const alliance = document.getElementById('allianceFilter').value;
+        const region = document.getElementById('regionFilter').value;
+
+        filteredData = ELEC.filter(e => {
+            if (search && !e.pc.toLowerCase().includes(search) && !e.st.toLowerCase().includes(search)) return false;
+            if (state && e.st !== state) return false;
+            if (alliance) {
+                if (alliance === 'Others' && (e.a24 === 'NDA' || e.a24 === 'INDIA')) return false;
+                if (alliance !== 'Others' && e.a24 !== alliance) return false;
+            }
+            if (region && e.region !== region) return false;
+            return true;
+        });
+
+        updateSummary();
+        updateTable();
+        updateMapColors();
+    }
+
+    function updateSummary() {
+        const total = filteredData.length;
+        const nda = filteredData.filter(e => e.a24 === 'NDA').length;
+        const india = filteredData.filter(e => e.a24 === 'INDIA').length;
+        const others = total - nda - india;
+
+        // Top parties
+        const partyCounts = {};
+        filteredData.forEach(e => { partyCounts[e.w24] = (partyCounts[e.w24] || 0) + 1; });
+        const sorted = Object.entries(partyCounts).sort((a, b) => b[1] - a[1]);
+        const top3 = sorted.slice(0, 3);
+
+        document.getElementById('summaryStrip').innerHTML = `
+            <div class="summary-card">
+                <div class="sc-label">Total Seats</div>
+                <div class="sc-value">${total}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">NDA</div>
+                <div class="sc-value sc-nda">${nda}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">INDIA</div>
+                <div class="sc-value sc-india">${india}</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Others</div>
+                <div class="sc-value sc-others">${others}</div>
+            </div>
+            ${top3.map(([p, c]) => `
+                <div class="summary-card">
+                    <div class="sc-label">${p}</div>
+                    <div class="sc-value" style="color:${getPartyColor(p)}">${c}</div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function updateTable() {
+        document.getElementById('tableCount').textContent = filteredData.length;
+        const tbody = document.getElementById('tableBody');
+
+        tbody.innerHTML = filteredData.map((e, i) => {
+            const swingStr = e.bjp_swing !== null
+                ? `<span class="${e.bjp_swing >= 0 ? 'swing-up' : 'swing-down'}">${e.bjp_swing >= 0 ? '+' : ''}${e.bjp_swing.toFixed(1)}</span>`
+                : '—';
+            return `<tr data-idx="${i}" onclick="highlightRow(${i})" onmouseenter="hoverRow(${i})" onmouseleave="unhoverRow()">
+                <td style="font-weight:500;">${e.pc}</td>
+                <td>${e.st}</td>
+                <td><span class="party-pill ${getPartyClass(e.w24)}">${e.w24 || '—'}</span></td>
+                <td><span class="party-pill ${getPartyClass(e.a24)}">${e.a24 || '—'}</span></td>
+                <td>${e.vs24 !== null ? e.vs24.toFixed(1) + '%' : '—'}</td>
+                <td>${e.mg24 !== null ? e.mg24.toFixed(1) + '%' : '—'}</td>
+                <td><span class="party-pill ${getPartyClass(e.w19)}" style="font-size:0.65rem;padding:0.05rem 0.35rem;">${e.w19 ? (e.w19.length > 10 ? e.w19.slice(0,8) + '…' : e.w19) : '—'}</span></td>
+                <td>${swingStr}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function updateMapColors() {
+        const colorMode = document.getElementById('mapColor').value;
+
+        const titles = {
+            'alliance24': '2024 Alliance',
+            'party24': '2024 Winning Party',
+            'party19': '2019 Winner',
+            'bjp_swing': 'BJP Vote Swing (2019→2024)',
+            'margin24': '2024 Win Margin',
+            'turnout': '2019 Turnout %'
+        };
+        document.getElementById('mapTitle').textContent = 'Constituency Map — ' + titles[colorMode];
+
+        // Build election lookup by geo_key
+        const elecByKey = {};
+        ELEC.forEach(e => { if (e.geo_key) elecByKey[e.geo_key] = e; });
+
+        // Which geo_keys are in filtered set
+        const filteredKeys = new Set(filteredData.filter(e => e.geo_key).map(e => e.geo_key));
+
+        if (geoLayer) map.removeLayer(geoLayer);
+
+        geoLayer = L.geoJSON(GEO, {
+            style: (feature) => {
+                const gk = feature.properties.geo_key;
+                const e = elecByKey[gk];
+                const inFilter = filteredKeys.has(gk);
+
+                if (!e || !inFilter) {
+                    return { fillColor: '#E5E5E5', fillOpacity: 0.4, color: '#ccc', weight: 0.5 };
+                }
+
+                let color = '#888';
+
+                if (colorMode === 'alliance24') {
+                    color = ALLIANCE_COLORS[e.a24] || '#888';
+                } else if (colorMode === 'party24') {
+                    color = getPartyColor(e.w24);
+                } else if (colorMode === 'party19') {
+                    color = getPartyColor(e.w19);
+                } else if (colorMode === 'bjp_swing') {
+                    const s = e.bjp_swing || 0;
+                    if (s > 10) color = '#FF4500';
+                    else if (s > 5) color = '#FF8C00';
+                    else if (s > 0) color = '#FFB347';
+                    else if (s > -5) color = '#87CEEB';
+                    else if (s > -10) color = '#4DA6FF';
+                    else color = '#0050AA';
+                } else if (colorMode === 'margin24') {
+                    const m = e.mg24 || 0;
+                    if (m > 30) color = '#1a4d2e';
+                    else if (m > 20) color = '#2d8a4e';
+                    else if (m > 10) color = '#5cb85c';
+                    else if (m > 5) color = '#FFD700';
+                    else color = '#FF6B6B';
+                } else if (colorMode === 'turnout') {
+                    const t = e.turnout19 || 0;
+                    if (t > 75) color = '#1a4d2e';
+                    else if (t > 65) color = '#5cb85c';
+                    else if (t > 55) color = '#FFD700';
+                    else color = '#FF6B6B';
+                }
+
+                return { fillColor: color, fillOpacity: 0.8, color: '#fff', weight: 0.8 };
+            },
+            onEachFeature: (feature, layer) => {
+                const gk = feature.properties.geo_key;
+                const e = elecByKey[gk];
+                if (e) {
+                    const tip = `<b>${e.pc}</b> (${e.st})<br>
+                        2024: ${e.w24} (${e.a24}) ${e.vs24 ? e.vs24.toFixed(1) + '%' : ''}<br>
+                        2019: ${e.w19 || '—'}<br>
+                        BJP Swing: ${e.bjp_swing !== null ? (e.bjp_swing >= 0 ? '+' : '') + e.bjp_swing.toFixed(1) + '%' : '—'}`;
+                    layer.bindTooltip(tip);
+                }
+            }
+        }).addTo(map);
+
+        // Update legend
+        updateLegend(colorMode);
+    }
+
+    function updateLegend(mode) {
+        const legend = document.getElementById('mapLegend');
+        let html = '';
+
+        if (mode === 'alliance24') {
+            html = `
+                <div class="leg-item"><div class="leg-dot" style="background:#FF8C00"></div>NDA</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#0077CC"></div>INDIA</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#888"></div>Others</div>`;
+        } else if (mode === 'bjp_swing') {
+            html = `
+                <div class="leg-item"><div class="leg-dot" style="background:#FF4500"></div>&gt;+10%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#FF8C00"></div>+5 to +10%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#FFB347"></div>0 to +5%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#87CEEB"></div>0 to -5%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#4DA6FF"></div>-5 to -10%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#0050AA"></div>&lt;-10%</div>`;
+        } else if (mode === 'margin24') {
+            html = `
+                <div class="leg-item"><div class="leg-dot" style="background:#1a4d2e"></div>&gt;30% (Safe)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#2d8a4e"></div>20-30%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#5cb85c"></div>10-20%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#FFD700"></div>5-10%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#FF6B6B"></div>&lt;5% (Close)</div>`;
+        } else if (mode === 'turnout') {
+            html = `
+                <div class="leg-item"><div class="leg-dot" style="background:#1a4d2e"></div>&gt;75%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#5cb85c"></div>65-75%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#FFD700"></div>55-65%</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#FF6B6B"></div>&lt;55%</div>`;
+        } else {
+            // party mode - show top parties
+            const counts = {};
+            filteredData.forEach(e => {
+                const p = mode === 'party24' ? e.w24 : e.w19;
+                if (p) counts[p] = (counts[p] || 0) + 1;
+            });
+            const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            html = top.map(([p]) =>
+                `<div class="leg-item"><div class="leg-dot" style="background:${getPartyColor(p)}"></div>${p.length > 12 ? p.slice(0,10) + '…' : p}</div>`
+            ).join('');
+        }
+
+        legend.innerHTML = html;
+    }
+
+    function highlightRow(idx) {
+        document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('highlighted'));
+        const row = document.querySelector(`tr[data-idx="${idx}"]`);
+        if (row) row.classList.add('highlighted');
+
+        const e = filteredData[idx];
+        if (e && e.geo_key && geoLayer) {
+            geoLayer.eachLayer(layer => {
+                const gk = layer.feature?.properties?.geo_key;
+                if (gk === e.geo_key) {
+                    map.fitBounds(layer.getBounds(), { maxZoom: 8, padding: [50, 50] });
+                    layer.openTooltip();
+                }
+            });
+        }
+    }
+
+    let hoverLayer = null;
+    function hoverRow(idx) {
+        const e = filteredData[idx];
+        if (e && e.geo_key && geoLayer) {
+            geoLayer.eachLayer(layer => {
+                if (layer.feature?.properties?.geo_key === e.geo_key) {
+                    layer.setStyle({ weight: 3, color: '#333' });
+                    layer.bringToFront();
+                    hoverLayer = layer;
+                }
+            });
+        }
+    }
+
+    function unhoverRow() {
+        if (hoverLayer) {
+            geoLayer.resetStyle(hoverLayer);
+            hoverLayer = null;
+        }
+    }
+
+    function sortTable(colIndex) {
+        if (sortState.col === colIndex) {
+            sortState.asc = !sortState.asc;
+        } else {
+            sortState.col = colIndex;
+            sortState.asc = colIndex < 2 ? true : false;
+        }
+
+        const keys = ['pc', 'st', 'w24', 'a24', 'vs24', 'mg24', 'w19', 'bjp_swing'];
+        const key = keys[colIndex];
+
+        filteredData.sort((a, b) => {
+            let av = a[key], bv = b[key];
+            if (av === null || av === undefined) av = sortState.asc ? Infinity : -Infinity;
+            if (bv === null || bv === undefined) bv = sortState.asc ? Infinity : -Infinity;
+            if (typeof av === 'string') return sortState.asc ? av.localeCompare(bv) : bv.localeCompare(av);
+            return sortState.asc ? av - bv : bv - av;
+        });
+
+        updateTable();
+    }
+    </script>
+</body>
+</html>
