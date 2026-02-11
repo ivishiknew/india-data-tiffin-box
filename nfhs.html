@@ -362,16 +362,25 @@
         </a>
         <div class="nav-links">
             <a href="index.html">Home</a>
+            <a href="population.html">Population</a>
+            <a href="elections.html">Elections</a>
+            <a href="mpi.html">MPI Poverty</a>
             <a href="nfhs.html" class="active">NFHS</a>
             <a href="gsdp.html">GSDP</a>
-            <a href="elections.html">Elections</a>
-            <a href="population.html">Population</a>
         </div>
     </nav>
 
-    <div class="page-header">
-        <h1>NFHS Data Explorer</h1>
-        <p>National Family Health Survey · NFHS-4 (2015-16) & NFHS-5 (2019-21) · 131 indicators across 37 States & UTs</p>
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+            <h1>NFHS Data Explorer</h1>
+            <p>National Family Health Survey · NFHS-4 (2015-16) & NFHS-5 (2019-21) · 131 indicators across 37 States & UTs</p>
+        </div>
+        <div style="flex:0 0 auto; margin-top:0.5rem;">
+            <button onclick="downloadNFHS()" style="display:inline-flex;align-items:center;gap:0.5rem;background:#0A1628;color:#FFF8F0;padding:0.6rem 1.2rem;border-radius:6px;font-size:0.82rem;font-weight:600;font-family:'Source Sans 3',sans-serif;cursor:pointer;border:none;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v9M4.5 7.5 8 11l3.5-3.5M3 13h10"/></svg>
+                Download CSV
+            </button>
+        </div>
     </div>
 
     <div class="controls" id="controls">
@@ -793,6 +802,24 @@
                 <td class="change-cell">${changePill}</td>
             </tr>`;
         }).join('');
+    }
+
+    function downloadNFHS() {
+        let csv = 'State/UT,Index,Indicator,NFHS5_Urban,NFHS5_Rural,NFHS5_Total,NFHS4_Total\n';
+        for (const [indKey, indName] of Object.entries(DATA.indicators)) {
+            for (const state of DATA.states) {
+                const d = DATA.data[indKey]?.[state];
+                if (d) {
+                    csv += `"${state}","${indKey}","${indName.replace(/"/g,'""')}",${d.u},${d.r},${d.t},${d.n4}\n`;
+                }
+            }
+        }
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'nfhs_all_states_india.csv';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
     function sortTable(colIndex) {

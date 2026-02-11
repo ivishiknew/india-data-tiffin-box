@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI Poverty · India Data Tiffin Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --navy: #0A1628;
+            --navy-light: #132240;
+            --cream: #FFF8F0;
+            --text: #2D2A26;
+            --text-light: #6B6560;
+            --accent: #C2410C;
+            --accent-light: #FFF1EB;
+            --gold: #D4A843;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: var(--navy);
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+        .nav-brand svg { width: 36px; height: 36px; }
+        .nav-brand span { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.25rem; color: var(--cream); }
+
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { color: rgba(255,248,240,0.7); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.03em; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .page-header {
+            padding: 2.5rem 3rem 1rem;
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .page-header h1 { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 2rem; color: var(--navy); }
+        .page-header p { color: var(--text-light); margin-top: 0.35rem; font-weight: 300; font-size: 0.95rem; }
+
+        .download-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--navy); color: var(--cream); text-decoration: none;
+            padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.82rem;
+            font-weight: 600; font-family: 'Source Sans 3', sans-serif; cursor: pointer;
+            border: none; transition: background 0.2s; margin-top: 0.5rem;
+        }
+        .download-btn:hover { background: var(--navy-light); }
+        .download-btn svg { width: 16px; height: 16px; }
+
+        .controls {
+            max-width: 1500px; margin: 0 auto; padding: 0.5rem 3rem 1.5rem;
+            display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .control-group label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); }
+        .control-group select { font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; padding: 0.5rem 0.7rem; border: 1px solid rgba(0,0,0,0.12); border-radius: 6px; background: white; color: var(--text); outline: none; }
+        .control-group select:focus { border-color: var(--accent); }
+
+        .summary-strip {
+            max-width: 1500px; margin: 0 auto; padding: 0 3rem 1rem;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem;
+        }
+
+        .summary-card { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; padding: 0.9rem 1rem; text-align: center; }
+        .summary-card .sc-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.25rem; }
+        .summary-card .sc-value { font-size: 1.4rem; font-weight: 700; line-height: 1.2; color: var(--navy); }
+        .summary-card .sc-sub { font-size: 0.72rem; color: var(--text-light); margin-top: 0.15rem; }
+
+        .content {
+            max-width: 1500px; margin: 0 auto; padding: 0 3rem 3rem;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+        }
+
+        .viz-card {
+            background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; padding: 1.5rem;
+        }
+        .viz-card.full-width { grid-column: 1 / -1; }
+
+        .viz-card h3 { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 0.75rem; }
+
+        .map-container { height: 480px; border-radius: 6px; overflow: hidden; }
+
+        .chart-container { position: relative; width: 100%; height: 420px; }
+        .chart-container.tall { height: 580px; }
+
+        /* Slope chart custom */
+        .slope-row {
+            display: flex; align-items: center; gap: 0; padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 0.8rem;
+            cursor: pointer; transition: background 0.12s;
+        }
+        .slope-row:hover { background: var(--accent-light); }
+        .slope-row.india-row { background: #FFF7ED; font-weight: 700; border-bottom: 2px solid rgba(0,0,0,0.08); }
+
+        .slope-label { width: 140px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+        .slope-vals { display: flex; gap: 0; flex: 1; align-items: center; }
+        .slope-val { width: 70px; text-align: center; font-size: 0.78rem; flex-shrink: 0; }
+        .slope-bar-wrap { flex: 1; height: 8px; background: #f3f0ec; border-radius: 4px; position: relative; margin: 0 6px; }
+        .slope-bar { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+        .slope-change { width: 70px; text-align: right; font-weight: 600; font-size: 0.78rem; flex-shrink: 0; }
+
+        .slope-header { display: flex; align-items: center; gap: 0; padding: 0.4rem 0 0.6rem; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); border-bottom: 2px solid var(--navy); }
+        .slope-header .slope-label { width: 140px; }
+        .slope-header .slope-val { width: 70px; text-align: center; }
+        .slope-header .slope-bar-wrap { text-align: center; }
+        .slope-header .slope-change { width: 70px; text-align: right; }
+
+        .legend-strip { display: flex; gap: 1rem; margin-bottom: 0.75rem; font-size: 0.7rem; color: var(--text-light); }
+        .legend-strip .leg { display: flex; align-items: center; gap: 4px; }
+        .legend-strip .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+        .map-legend {
+            background: white; padding: 8px 12px; border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 0.7rem; line-height: 1.6;
+        }
+        .map-legend .ml-title { font-weight: 700; margin-bottom: 4px; }
+        .map-legend .ml-row { display: flex; align-items: center; gap: 6px; }
+        .map-legend .ml-box { width: 14px; height: 10px; border-radius: 1px; }
+
+        footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: var(--text-light); border-top: 1px solid rgba(0,0,0,0.06); }
+
+        @media (max-width: 1024px) { .content { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .page-header, .controls, .summary-strip, .content { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .page-header { flex-direction: column; gap: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <svg viewBox="0 0 36 36" fill="none"><rect x="6" y="8" width="24" height="5" rx="2" fill="#FF6B2B"/><rect x="7" y="14" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#FF6B2B" stroke-width="1.5"/><rect x="7" y="22" width="22" height="7" rx="1.5" fill="#FFF8F0" stroke="#138808" stroke-width="1.5"/><line x1="18" y1="5" x2="18" y2="8" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/><circle cx="18" cy="4" r="2" fill="#D4A843"/></svg>
+            <span>India Data Tiffin Box</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="population.html">Population</a>
+            <a href="elections.html">Elections</a>
+            <a href="mpi.html" class="active">MPI Poverty</a>
+            <a href="nfhs.html">NFHS</a>
+            <a href="gsdp.html">GSDP</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div>
+            <h1>Multidimensional Poverty Index</h1>
+            <p>Share of population who are multidimensionally poor · 2005-06, 2015-16 & 2019-21 · 29 States + India</p>
+        </div>
+        <div style="text-align:right; flex: 0 0 auto;">
+            <button class="download-btn" onclick="downloadCSV()">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v9M4.5 7.5 8 11l3.5-3.5M3 13h10"/></svg>
+                Download CSV
+            </button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Map Period</label>
+            <select id="mapPeriod" onchange="updateMap()">
+                <option value="y2019">2019-21 (Latest)</option>
+                <option value="y2015">2015-16</option>
+                <option value="y2005">2005-06</option>
+                <option value="change">Change 2005→2019 (pp)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Sort Table By</label>
+            <select id="sortBy" onchange="updateSlope()">
+                <option value="y2019">2019-21 Value</option>
+                <option value="y2005">2005-06 Value</option>
+                <option value="change">Largest Reduction</option>
+                <option value="name">State Name</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="summary-strip" id="summaryStrip"></div>
+
+    <div class="content">
+        <div class="viz-card">
+            <h3 id="mapTitle">MPI Poverty Rate — 2019-21</h3>
+            <div class="legend-strip" id="mapLegendInline"></div>
+            <div id="map" class="map-container"></div>
+        </div>
+
+        <div class="viz-card">
+            <h3>State Progression Over Time</h3>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="viz-card full-width">
+            <h3>All States — MPI Poverty Rate (%)</h3>
+            <div class="slope-header">
+                <div class="slope-label">State</div>
+                <div class="slope-vals">
+                    <div class="slope-val">2005-06</div>
+                    <div class="slope-bar-wrap">Progress bar (latest period)</div>
+                    <div class="slope-val">2019-21</div>
+                </div>
+                <div class="slope-change">Reduction</div>
+            </div>
+            <div id="slopeChart"></div>
+        </div>
+
+        <div class="viz-card full-width">
+            <h3>Reduction in MPI Poverty (percentage points)</h3>
+            <div class="chart-container tall">
+                <canvas id="reductionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        India Data Tiffin Box · Data: OPHI / Oxford Poverty & Human Development Initiative · Alkire, Kanagaratnam & Suppa (2023)
+    </footer>
+
+    <script>
+    let MPI = [];
+    let GEO = null;
+    let map = null;
+    let geoLayer = null;
+    let trendChart = null;
+    let reductionChart = null;
+
+    const POVERTY_COLORS = [
+        { max: 5, color: '#dcfce7', label: '< 5%' },
+        { max: 10, color: '#86efac', label: '5–10%' },
+        { max: 20, color: '#facc15', label: '10–20%' },
+        { max: 30, color: '#f97316', label: '20–30%' },
+        { max: 50, color: '#ef4444', label: '30–50%' },
+        { max: 100, color: '#991b1b', label: '> 50%' },
+    ];
+
+    const CHANGE_COLORS = [
+        { max: -50, color: '#166534', label: '> 50pp reduction' },
+        { max: -40, color: '#16a34a', label: '40–50pp' },
+        { max: -30, color: '#4ade80', label: '30–40pp' },
+        { max: -20, color: '#86efac', label: '20–30pp' },
+        { max: -10, color: '#fde68a', label: '10–20pp' },
+        { max: 0, color: '#fca5a5', label: '< 10pp' },
+    ];
+
+    function getPovertyColor(val) {
+        for (const c of POVERTY_COLORS) {
+            if (val <= c.max) return c.color;
+        }
+        return '#991b1b';
+    }
+
+    function getChangeColor(val) {
+        // val is negative (reduction), more negative = more improvement
+        for (const c of CHANGE_COLORS) {
+            if (val <= c.max) return c.color;
+        }
+        return '#fca5a5';
+    }
+
+    Promise.all([
+        fetch('mpi_data.json').then(r => r.json()),
+        fetch('india_states.geojson').then(r => r.json())
+    ]).then(([mpi, geo]) => {
+        MPI = mpi;
+        GEO = geo;
+        init();
+    });
+
+    function init() {
+        updateSummary();
+        initMap();
+        updateMap();
+        updateTrendChart();
+        updateSlope();
+        updateReductionChart();
+    }
+
+    function updateSummary() {
+        const india = MPI.find(d => d.state === 'India');
+        const states = MPI.filter(d => d.state !== 'India');
+        const worst = [...states].sort((a, b) => b.y2019 - a.y2019)[0];
+        const best = [...states].sort((a, b) => a.y2019 - b.y2019)[0];
+        const biggestDrop = [...states].sort((a, b) => (a.y2019 - a.y2005) - (b.y2019 - b.y2005))[0];
+
+        document.getElementById('summaryStrip').innerHTML = `
+            <div class="summary-card">
+                <div class="sc-label">India 2019-21</div>
+                <div class="sc-value" style="color:var(--accent)">${india.y2019}%</div>
+                <div class="sc-sub">down from ${india.y2005}% in 2005</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">National Reduction</div>
+                <div class="sc-value" style="color:#16a34a">−${(india.y2005 - india.y2019).toFixed(1)}pp</div>
+                <div class="sc-sub">over ~15 years</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Lowest Poverty</div>
+                <div class="sc-value" style="font-size:1.1rem;">${best.state}</div>
+                <div class="sc-sub">${best.y2019}%</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Highest Poverty</div>
+                <div class="sc-value" style="font-size:1.1rem;">${worst.state}</div>
+                <div class="sc-sub">${worst.y2019}%</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-label">Biggest Reduction</div>
+                <div class="sc-value" style="font-size:1.1rem;">${biggestDrop.state}</div>
+                <div class="sc-sub">−${(biggestDrop.y2005 - biggestDrop.y2019).toFixed(1)}pp</div>
+            </div>
+        `;
+    }
+
+    function initMap() {
+        map = L.map('map', { scrollWheelZoom: true }).setView([22.5, 82], 4.5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+            attribution: '©OSM ©CARTO', maxZoom: 10
+        }).addTo(map);
+
+        // Legend control
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function() {
+            const div = L.DomUtil.create('div', 'map-legend');
+            div.id = 'mapLegendCtrl';
+            return div;
+        };
+        legend.addTo(map);
+    }
+
+    function updateMap() {
+        const period = document.getElementById('mapPeriod').value;
+        const isChange = period === 'change';
+
+        const titles = { y2019: '2019-21', y2015: '2015-16', y2005: '2005-06', change: 'Change 2005→2019' };
+        document.getElementById('mapTitle').textContent = 'MPI Poverty Rate — ' + titles[period];
+
+        // Build lookup
+        const lookup = {};
+        MPI.forEach(d => { if (d.state !== 'India') lookup[d.geo_name || d.state] = d; });
+
+        if (geoLayer) map.removeLayer(geoLayer);
+
+        geoLayer = L.geoJSON(GEO, {
+            style: (feature) => {
+                const st = feature.properties.state;
+                const d = lookup[st];
+                if (!d) return { fillColor: '#E5E5E5', fillOpacity: 0.5, color: '#ccc', weight: 0.8 };
+
+                let val, color;
+                if (isChange) {
+                    val = -(d.y2005 - d.y2019); // negative = reduction
+                    color = getChangeColor(val);
+                } else {
+                    val = d[period];
+                    color = getPovertyColor(val);
+                }
+
+                return { fillColor: color, fillOpacity: 0.85, color: '#fff', weight: 1.2 };
+            },
+            onEachFeature: (feature, layer) => {
+                const st = feature.properties.state;
+                const d = lookup[st];
+                if (d) {
+                    const tip = `<b>${d.state}</b><br>
+                        2005-06: ${d.y2005}%<br>
+                        2015-16: ${d.y2015}%<br>
+                        2019-21: ${d.y2019}%<br>
+                        Reduction: −${(d.y2005 - d.y2019).toFixed(1)}pp`;
+                    layer.bindTooltip(tip);
+                }
+            }
+        }).addTo(map);
+
+        // Update legend
+        const legendEl = document.getElementById('mapLegendCtrl');
+        const colors = isChange ? CHANGE_COLORS : POVERTY_COLORS;
+        legendEl.innerHTML = `<div class="ml-title">${isChange ? 'Reduction (pp)' : '% MPI Poor'}</div>` +
+            colors.map(c => `<div class="ml-row"><div class="ml-box" style="background:${c.color}"></div>${c.label}</div>`).join('');
+    }
+
+    function updateTrendChart() {
+        const ctx = document.getElementById('trendChart');
+        if (trendChart) trendChart.destroy();
+
+        const india = MPI.find(d => d.state === 'India');
+        const states = MPI.filter(d => d.state !== 'India');
+
+        // Show all states as thin gray lines, India as thick
+        const datasets = [];
+
+        states.forEach(d => {
+            datasets.push({
+                label: d.state,
+                data: [d.y2005, d.y2015, d.y2019],
+                borderColor: 'rgba(0,0,0,0.1)',
+                borderWidth: 1.2,
+                pointRadius: 2,
+                pointBackgroundColor: 'rgba(0,0,0,0.15)',
+                tension: 0.3,
+            });
+        });
+
+        // Top 5 worst + top 5 best in color
+        const worst5 = [...states].sort((a, b) => b.y2019 - a.y2019).slice(0, 5);
+        const best5 = [...states].sort((a, b) => a.y2019 - b.y2019).slice(0, 5);
+        const highlights = [...worst5, ...best5];
+        const hColors = ['#991b1b','#dc2626','#ef4444','#f97316','#facc15','#16a34a','#22c55e','#4ade80','#86efac','#dcfce7'];
+
+        highlights.forEach((d, i) => {
+            const existing = datasets.find(ds => ds.label === d.state);
+            if (existing) {
+                existing.borderColor = hColors[i];
+                existing.borderWidth = 2;
+                existing.pointRadius = 3.5;
+                existing.pointBackgroundColor = hColors[i];
+                existing.order = -1;
+            }
+        });
+
+        // India line
+        datasets.push({
+            label: 'India',
+            data: [india.y2005, india.y2015, india.y2019],
+            borderColor: '#0A1628',
+            borderWidth: 3,
+            borderDash: [6, 3],
+            pointRadius: 5,
+            pointBackgroundColor: '#0A1628',
+            tension: 0.3,
+            order: -2,
+        });
+
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['2005-06', '2015-16', '2019-21'], datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'nearest', intersect: true },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y + '%' }
+                    }
+                },
+                scales: {
+                    y: { ticks: { font: { family: 'Source Sans 3' }, callback: v => v + '%' }, min: 0, max: 85 },
+                    x: { ticks: { font: { family: 'Source Sans 3', size: 12, weight: '600' } } }
+                }
+            }
+        });
+    }
+
+    function updateSlope() {
+        const sortBy = document.getElementById('sortBy').value;
+        const container = document.getElementById('slopeChart');
+
+        let states = MPI.filter(d => d.state !== 'India');
+        const india = MPI.find(d => d.state === 'India');
+
+        if (sortBy === 'y2019') states.sort((a, b) => a.y2019 - b.y2019);
+        else if (sortBy === 'y2005') states.sort((a, b) => b.y2005 - a.y2005);
+        else if (sortBy === 'change') states.sort((a, b) => (a.y2019 - a.y2005) - (b.y2019 - b.y2005));
+        else states.sort((a, b) => a.state.localeCompare(b.state));
+
+        const allData = [india, ...states];
+        const maxVal = Math.max(...allData.map(d => Math.max(d.y2005, d.y2019)));
+
+        container.innerHTML = allData.map(d => {
+            const isIndia = d.state === 'India';
+            const reduction = (d.y2005 - d.y2019).toFixed(1);
+            const barWidth = (d.y2019 / maxVal * 100).toFixed(1);
+            const barColor = getPovertyColor(d.y2019);
+
+            return `<div class="slope-row ${isIndia ? 'india-row' : ''}">
+                <div class="slope-label">${d.state}</div>
+                <div class="slope-vals">
+                    <div class="slope-val" style="color:var(--text-light);">${d.y2005}%</div>
+                    <div class="slope-bar-wrap">
+                        <div class="slope-bar" style="width:${barWidth}%; background:${barColor};"></div>
+                    </div>
+                    <div class="slope-val" style="font-weight:600;">${d.y2019}%</div>
+                </div>
+                <div class="slope-change" style="color:#16a34a;">−${reduction}pp</div>
+            </div>`;
+        }).join('');
+    }
+
+    function updateReductionChart() {
+        const ctx = document.getElementById('reductionChart');
+        if (reductionChart) reductionChart.destroy();
+
+        let states = MPI.filter(d => d.state !== 'India');
+        states = states.map(d => ({ ...d, reduction: d.y2005 - d.y2019 }));
+        states.sort((a, b) => b.reduction - a.reduction);
+
+        reductionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: states.map(d => d.state),
+                datasets: [
+                    {
+                        label: '2005→2015 Reduction',
+                        data: states.map(d => d.y2005 - d.y2015),
+                        backgroundColor: 'rgba(194, 65, 12, 0.5)',
+                        borderRadius: 2,
+                    },
+                    {
+                        label: '2015→2019 Reduction',
+                        data: states.map(d => d.y2015 - d.y2019),
+                        backgroundColor: 'rgba(22, 163, 74, 0.7)',
+                        borderRadius: 2,
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { family: 'Source Sans 3', size: 11 }, usePointStyle: true } },
+                    tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.x.toFixed(1) + 'pp' } }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: { font: { family: 'Source Sans 3', size: 11 }, callback: v => v + 'pp' },
+                    },
+                    y: { stacked: true, ticks: { font: { family: 'Source Sans 3', size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function downloadCSV() {
+        let csv = 'State,2005-06 (%),2015-16 (%),2019-21 (%),Reduction (pp)\n';
+        const india = MPI.find(d => d.state === 'India');
+        const states = MPI.filter(d => d.state !== 'India').sort((a, b) => a.state.localeCompare(b.state));
+        [india, ...states].forEach(d => {
+            csv += `"${d.state}",${d.y2005},${d.y2015},${d.y2019},${(d.y2005 - d.y2019).toFixed(1)}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'mpi_poverty_india.csv';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+    </script>
+</body>
+</html>
